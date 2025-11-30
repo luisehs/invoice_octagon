@@ -20,23 +20,23 @@ async def register(user: UserCreate):
 
     hashed_pw = get_password_hash(user.password)
 
-    resp = supabase.rpc(
-        "fn_users_create",
-        {
-            "p_firstname": user.u_firstname,
-            "p_lastname": user.u_lastname,
-            "p_email": user.u_email,
-            "p_password": hashed_pw,
-            "p_role": user.u_role,
-            "p_is_active": user.u_is_active,
-        },
-    ).execute()
-
-    if resp.error:
+    try:
+        supabase.rpc(
+            "fn_users_create",
+            {
+                "p_firstname": user.u_firstname,
+                "p_lastname": user.u_lastname,
+                "p_email": user.u_email,
+                "p_password": hashed_pw,
+                "p_role": user.u_role,
+                "p_is_active": user.u_is_active,
+            },
+        ).execute()
+    except Exception as exc:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error creating user: {resp.error.message}",
-        )
+            detail=f"Error creating user: {exc}",
+        ) from exc
 
     return {"message": "User created successfully"}
 

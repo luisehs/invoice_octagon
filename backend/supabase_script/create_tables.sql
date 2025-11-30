@@ -42,12 +42,12 @@ create table if not exists public.invoice_details (
     id_sale_tax numeric(12, 2),
     id_adress text,
     id_adress2 text,
-    id_i_id uuid not null,
+    id_id uuid not null,
     id_create_at timestamptz not null default now(),
     constraint invoice_details_pk
-        primary key (id_number, id_i_id),
+        primary key (id_number, id_id),
     constraint invoice_details_invoice_fk
-        foreign key (id_i_id)
+        foreign key (id_id)
         references public.invoices (i_id)
         on delete cascade
 );

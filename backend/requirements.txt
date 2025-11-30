@@ -7,3 +7,6 @@ passlib[bcrypt]
 pydantic<2
 email-validator
 python-multipart
+bcrypt==3.2.2
+jinja2
+xhtml2pdf

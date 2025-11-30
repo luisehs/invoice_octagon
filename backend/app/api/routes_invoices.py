@@ -3,6 +3,9 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from app.db.supabase_client import supabase
 from app.api.deps import get_current_user_id
 from app.schemas.invoices import InvoiceCreate, InvoiceRead
+from fastapi.responses import Response
+from app.core.templates import render_template
+from app.core.pdf import html_to_pdf_bytes
 
 router = APIRouter(prefix="/invoices", tags=["invoices"])
 
@@ -25,27 +28,27 @@ async def create_invoice(
         for d in invoice.details
     ]
 
-    resp = supabase.rpc(
-        "fn_invoice_create_with_details",
-        {
-            "p_name": invoice.i_name,
-            "p_inscription": invoice.i_inscription,
-            "p_email": invoice.i_email,
-            "p_address": invoice.i_address,
-            "p_serie": invoice.i_serie,
-            "p_date": str(invoice.i_date),
-            "p_billto": invoice.i_billto,
-            "p_total": invoice.i_total,
-            "p_u_id": current_user_id,
-            "p_details": details_json,
-        },
-    ).execute()
-
-    if resp.error:
+    try:
+        resp = supabase.rpc(
+            "fn_invoice_create_with_details",
+            {
+                "p_name": invoice.i_name,
+                "p_inscription": invoice.i_inscription,
+                "p_email": invoice.i_email,
+                "p_address": invoice.i_address,
+                "p_serie": invoice.i_serie,
+                "p_date": str(invoice.i_date),
+                "p_billto": invoice.i_billto,
+                "p_total": invoice.i_total,
+                "p_u_id": current_user_id,
+                "p_details": details_json,
+            },
+        ).execute()
+    except Exception as exc:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error creating invoice: {resp.error.message}",
-        )
+            detail=f"Error creating invoice: {exc}",
+        ) from exc
 
     data = resp.data
     return InvoiceRead(
@@ -67,16 +70,16 @@ async def create_invoice(
 async def list_invoices(
     current_user_id: str = Depends(get_current_user_id),
 ):
-    resp = supabase.rpc(
-        "fn_invoices_list",
-        {"p_u_id": current_user_id},
-    ).execute()
-
-    if resp.error:
+    try:
+        resp = supabase.rpc(
+            "fn_invoices_list",
+            {"p_u_id": current_user_id},
+        ).execute()
+    except Exception as exc:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error listing invoices: {resp.error.message}",
-        )
+            detail=f"Error listing invoices: {exc}",
+        ) from exc
 
     invoices = []
     for item in resp.data:
@@ -97,3 +100,75 @@ async def list_invoices(
         )
 
     return invoices
+
+@router.get("/{invoice_id}/pdf")
+async def get_invoice_pdf(
+    invoice_id: str,
+    current_user_id: str = Depends(get_current_user_id),
+):
+    # 1. Obtener la invoice (header) desde Supabase
+    try:
+        invoice_resp = supabase.rpc(
+            "fn_invoices_get_by_id",
+            {"p_i_id": invoice_id},
+        ).execute()
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error fetching invoice: {exc}",
+        ) from exc
+
+    invoice = invoice_resp.data
+    if not invoice:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Invoice not found",
+        )
+
+    # Verificar que la invoice pertenezca al usuario actual
+    if invoice["i_u_id"] != current_user_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to view this invoice",
+        )
+
+    # 2. Obtener los detalles de la invoice
+    try:
+        details_resp = supabase.rpc(
+            "fn_invoice_details_list_by_invoice",
+            {"p_id_id": invoice_id},
+        ).execute()
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error fetching invoice details: {exc}",
+        ) from exc
+
+    details = details_resp.data or []
+
+    # 3. Preparar contexto para el template
+    context = {
+        "invoice": invoice,
+        "details": details,
+    }
+
+    # 4. Renderizar HTML desde el template
+    html = render_template("invoice.html", context)
+
+    # 5. Convertir HTML a PDF
+    try:
+        pdf_bytes = html_to_pdf_bytes(html)
+    except RuntimeError as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e),
+        )
+
+    # 6. Devolver el PDF como respuesta HTTP
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f'inline; filename="invoice_{invoice_id}.pdf"'
+        },
+    )
