@@ -30,8 +30,15 @@ async def get_current_user_id(token: str = Depends(oauth2_scheme)) -> str:
     except JWTError:
         raise credentials_exception
 
-    resp = supabase.table("users").select("*").eq("u_id", user_id).single().execute()
-    if resp.data is None or resp.data.get("u_is_active") is False:
+    resp = (
+        supabase.table("users")
+        .select("*")
+        .eq("u_id", user_id)
+        .limit(1)
+        .execute()
+    )
+    user = resp.data[0] if resp.data else None
+    if user is None or user.get("u_is_active") is False:
         raise credentials_exception
 
     return user_id

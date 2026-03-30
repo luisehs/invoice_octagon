@@ -2,6 +2,7 @@ import axios from "axios";
 
 const api = axios.create({
   // Ajusta al puerto real del backend FastAPI
+  // baseURL: "http://34.199.155.34:8000",
   baseURL: "http://localhost:8000",
 });
 

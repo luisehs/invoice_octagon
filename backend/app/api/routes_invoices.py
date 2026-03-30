@@ -146,14 +146,22 @@ async def get_invoice_pdf(
 
     details = details_resp.data or []
 
-    # 3. Preparar contexto para el template
+    # 3. Preparar contexto para el template (usa invoice.html)
     context = {
         "invoice": invoice,
         "details": details,
+        "i_total": invoice.get("i_total", 0),
+        "i_serie": invoice.get("i_serie", ""),
+        "i_date": invoice.get("i_date", ""),
+        "i_billto": invoice.get("i_billto", ""),
+        "i_name": invoice.get("i_name", ""),
+        "i_inscription": invoice.get("i_inscription", ""),
+        "i_email": invoice.get("i_email", ""),
+        "i_address": invoice.get("i_address", ""),
     }
 
     # 4. Renderizar HTML desde el template
-    html = render_template("invoice.html", context)
+    html = render_template("_invoice.html", context)
 
     # 5. Convertir HTML a PDF
     try:

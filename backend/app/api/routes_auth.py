@@ -46,8 +46,14 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
     email = form_data.username
     password = form_data.password
 
-    resp = supabase.table("users").select("*").eq("u_email", email).single().execute()
-    user = resp.data
+    resp = (
+        supabase.table("users")
+        .select("*")
+        .eq("u_email", email)
+        .limit(1)
+        .execute()
+    )
+    user = resp.data[0] if resp.data else None
 
     if not user:
         raise HTTPException(

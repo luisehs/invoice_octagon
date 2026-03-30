@@ -1,2 +1,8 @@
 pwd
 backend/supabase_script/invoice.sql
+/backend/__pycache__
+/backend/app/__pycache__
+/backend/app/api/__pycache__
+/backend/app/core/__pycache__
+/backend/app/db/__pycache__
+/backend/app/schemas/__pycache__
