@@ -8,7 +8,8 @@ from app.api.routes_invoices import router as invoices_router
 app = FastAPI(title="Invoice Backend")
 
 origins = [
-    "http://34.174.207.207",
+    "https://invoices.octagonpr.co",
+    "http://34.174.207.207",    ""
     "http://34.174.207.207:80",
     "*"
     #"http://localhost:3000",

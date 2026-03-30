@@ -5,8 +5,8 @@ After=network.target
 [Service]
 User=ubuntu
 Group=www-data
-WorkingDirectory=/var/www/invoice_octagon/backend
-EnvironmentFile=/var/www/invoice_octagon/backend/.env
+WorkingDirectory=/home/ubuntu/invoice/invoice_octagon/backend
+EnvironmentFile=/home/ubuntu/invoice/invoice_octagon/backend/.env
 ExecStart=/home/ubuntu/miniconda3/envs/octagon/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000 --workers 2
 Restart=always
 RestartSec=5

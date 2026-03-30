@@ -11,8 +11,8 @@ Este backend usa `FastAPI` y `uvicorn`. Para este proyecto, el flujo recomendado
 La guia asume que ya tienes:
 
 - una instancia EC2 activa
-- el repositorio clonado en `/var/www/invoice_octagon`
-- tu archivo `.env` en `/var/www/invoice_octagon/backend/.env`
+- el repositorio clonado en `/home/ubuntu/invoice/invoice_octagon`
+- tu archivo `.env` en `/home/ubuntu/invoice/invoice_octagon/backend/.env`
 - tu entorno conda funcionando
 
 Si `nginx` no esta instalado:
@@ -33,6 +33,7 @@ Este repo incluye el archivo [invoice-api.service](F:\Octagon\repositories\invoi
 Copialo al sistema y activalo:
 
 ```bash
+cd /home/ubuntu/invoice/invoice_octagon/backend
 sudo cp deploy/invoice-api.service /etc/systemd/system/invoice-api.service
 sudo systemctl daemon-reload
 sudo systemctl enable invoice-api
@@ -43,6 +44,7 @@ sudo systemctl status invoice-api
 ## 3. Nginx
 
 ```bash
+cd /home/ubuntu/invoice/invoice_octagon/backend
 sudo cp deploy/invoice-api.nginx.conf /etc/nginx/sites-available/invoice-api
 sudo ln -s /etc/nginx/sites-available/invoice-api /etc/nginx/sites-enabled/invoice-api
 sudo nginx -t
