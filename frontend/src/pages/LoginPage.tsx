@@ -9,7 +9,7 @@ const LoginPage: React.FC = () => {
   const location = useLocation() as { state?: { from?: Location } };
 
   const [email, setEmail] = useState("luis@example.com");
-  const [password, setPassword] = useState("MiPassSuperSeguro123");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
