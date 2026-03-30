@@ -8,8 +8,11 @@ from app.api.routes_invoices import router as invoices_router
 app = FastAPI(title="Invoice Backend")
 
 origins = [
-    "http://localhost:3000",
-    "http://localhost:5173",
+    "*"
+    #"http://localhost:3000",
+    #"http://localhost:5173",
+    # "http://localhost:3000",
+    # "http://localhost:5173",
 ]
 
 app.add_middleware(
