@@ -35,7 +35,7 @@ const LoginPage: React.FC = () => {
         <div className="login-header">
           <div className="logo-circle">O</div>
           <div>
-            <div className="login-title">OCTAGON INVOICES</div>
+            <div className="login-title">OCTAGONPR INVOICES</div>
             <div className="login-subtitle">Internal dashboard</div>
           </div>
         </div>
