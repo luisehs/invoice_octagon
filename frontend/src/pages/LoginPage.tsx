@@ -33,7 +33,7 @@ const LoginPage: React.FC = () => {
     <div className="app-bg h-screen flex items-center justify-center">
       <div className="login-card">
         <div className="login-header">
-          <div className="logo-circle">O</div>
+          <div className="logo-circle">L</div>
           <div>
             <div className="login-title">OCTAGONPR INVOICES</div>
             <div className="login-subtitle">Internal dashboard</div>
