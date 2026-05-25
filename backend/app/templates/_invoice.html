@@ -200,10 +200,10 @@
             <span class="label">Located at:</span>
           </div>
           <div style="margin-top:0px;">
-            Address: {% if d.id_adress %}{{ d.id_adress }}{% endif %}
+            {% if d.id_adress %}{{ d.id_adress }}{% endif %}
           </div>
           <div style="margin-top:0px;">
-            Address 2: {% if d.id_adress2 %}{{ d.id_adress2 }}{% endif %}
+            {% if d.id_adress2 %}{{ d.id_adress2 }}{% endif %}
           </div>
           <div style="margin-left: 80px; margin-right: 20px; margin-top: 15px;
 ">
