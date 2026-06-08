@@ -8,7 +8,7 @@ const LoginPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation() as { state?: { from?: Location } };
 
-  const [email, setEmail] = useState("luis@example.com");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -20,7 +20,8 @@ const LoginPage: React.FC = () => {
     setError(null);
     setLoading(true);
     try {
-      await login(email, password);
+      const loginEmail = username.includes("@") ? username : `${username}@print.com`;
+      await login(loginEmail, password);
       navigate(from, { replace: true });
     } catch (err) {
       setError("Credenciales inválidas o error de servidor.");
@@ -39,12 +40,12 @@ const LoginPage: React.FC = () => {
 
         <form onSubmit={handleSubmit} className="mt-4">
           <label className="form-label">
-            Email
+            User
             <input
-              type="email"
+              type="text"
               className="form-input"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              value={username}
+              onChange={(e) => setUsername(e.target.value.trim())}
               required
             />
           </label>
