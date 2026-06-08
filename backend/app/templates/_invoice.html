@@ -1,356 +1,376 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>Invoice {{ invoice.i_serie }}</title>
-  <style>
-    @page {
-      size: A4;
-      margin: 15mm 15mm 15mm 15mm;
-    }
+  <head>
+    <meta charset="UTF-8" />
+    <title>Invoice {{ invoice.i_serie }}</title>
+    <style>
+      @page {
+        size: A4;
+        margin: 15mm 15mm 15mm 15mm;
+      }
 
-    body {
-      margin: 0;
-      padding: 0;
-      font-family: Arial, sans-serif;
-      font-size: 11px;
-    }
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: Arial, sans-serif;
+        font-size: 11px;
+      }
 
-    .invoice-page {
-      width: 100%;
-    }
+      .invoice-page {
+        width: 100%;
+      }
 
-    .title-main {
-      font-weight: bold;
-      font-size: 16px;
-    }
+      .title-main {
+        font-weight: bold;
+        font-size: 16px;
+      }
 
-    .subtitle {
-      font-size: 10px;
-      font-style: italic;
-      font-weight: bold;
-    }
+      .subtitle {
+        font-size: 10px;
+        font-style: italic;
+        font-weight: bold;
+      }
 
-    .label {
-      font-weight: bold;
-    }
+      .label {
+        font-weight: bold;
+      }
 
-    .mt-5  { margin-top: 5px; }
-    .mt-10 { margin-top: 10px; }
-    .mt-15 { margin-top: 15px; }
-    .mt-20 { margin-top: 20px; }
+      .mt-5 {
+        margin-top: 5px;
+      }
+      .mt-10 {
+        margin-top: 10px;
+      }
+      .mt-15 {
+        margin-top: 15px;
+      }
+      .mt-20 {
+        margin-top: 20px;
+      }
 
-    .invoice-word {
-      font-size: 30px;
-      font-weight: bold;
-      color: #dde2e6;
-      letter-spacing: 2px;
-    }
+      .invoice-word {
+        font-size: 30px;
+        font-weight: bold;
+        color: #dde2e6;
+        letter-spacing: 2px;
+      }
 
-    .header-address {
-      font-size: 10px;
-      line-height: 1;
-      padding-top: 28px;
-    }
+      .header-address {
+        font-size: 10px;
+        line-height: 1;
+        padding-top: 28px;
+      }
 
-    .invoice-meta {
-      margin-top: 24px;
-      font-size: 11px;
-    }
+      .invoice-meta {
+        margin-top: 24px;
+        font-size: 11px;
+      }
 
-    .invoice-meta td {
-      padding: 1px 4px;
-    }
+      .invoice-meta td {
+        padding: 1px 4px;
+      }
 
-    .billto-value {
-      padding: 2px 4px;
-      font-weight: bold;
-    }
+      .billto-value {
+        padding: 2px 4px;
+        font-weight: bold;
+      }
 
-    table {
-      border-collapse: collapse;
-    }
+      table {
+        border-collapse: collapse;
+      }
 
-    .items-table {
-      width: 100%;
-      margin-top: 15px;
-    }
+      .items-table {
+        width: 100%;
+        margin-top: 15px;
+      }
 
-    .items-table th,
-    .items-table td {
-      border: 1px solid #000000;
-      padding: 4px;
-      vertical-align: top;
-    }
+      .items-table th,
+      .items-table td {
+        border: 1px solid #000000;
+        padding: 4px;
+        vertical-align: top;
+      }
 
-    .items-table th {
-      background-color: #f0f0f0;
-    }
+      .items-table th {
+        background-color: #f0f0f0;
+      }
 
-    .text-right {
-      text-align: right;
-    }
+      .text-right {
+        text-align: right;
+      }
 
-    .totals-table {
-      margin-top: 8px;
-      width: 220px;
-      font-size: 11px;
-    }
+      .totals-table {
+        margin-top: 8px;
+        width: 220px;
+        font-size: 11px;
+      }
 
-    .totals-table td {
-      border: 1px solid #000000;
-      padding: 4px;
-    }
+      .totals-table td {
+        border: 1px solid #000000;
+        padding: 4px;
+      }
 
-    .totals-label {
-      width: 60%;
-    }
+      .totals-label {
+        width: 60%;
+      }
 
-    .totals-value {
-      width: 40%;
-      text-align: right;
-    }
+      .totals-value {
+        width: 40%;
+        text-align: right;
+      }
 
-    .footer-note {
-      margin-top: 25px;
-      font-size: 10px;
-    }
+      .footer-note {
+        margin-top: 25px;
+        font-size: 10px;
+      }
 
-    .signature-area {
-      margin-top: 25px;
-      height: 40px;
-    }
+      .signature-area {
+        margin-top: 25px;
+        height: 40px;
+      }
 
-    .signature-image {
-      width: 161px;
-      height: auto;
-      margin-left: 45px;
-    }
+      .signature-image {
+        width: 161px;
+        height: auto;
+        margin-left: 45px;
+      }
 
-    .detail-paid-table {
-      width: 100%;
-      margin-top: 0;
-    }
+      .detail-paid-table {
+        width: 100%;
+        margin-top: 0;
+      }
 
-    .address-highlight {
-      padding: 0;
-      line-height: 1.4;
-    }
+      .address-highlight {
+        padding: 0;
+        line-height: 1.4;
+      }
 
-    .items-table .detail-paid-table td {
-      border: 0;
-      padding: 0;
-    }
+      .items-table .detail-paid-table td {
+        border: 0;
+        padding: 0;
+      }
 
-    .detail-paid-cell {
-      text-align: right;
-      vertical-align: top;
-    }
+      .detail-paid-cell {
+        text-align: right;
+        vertical-align: top;
+      }
 
-    .paid-stamp {
-      width: 245px;
-      height: auto;
-    }
-  </style>
-</head>
-<body>
-<div class="invoice-page">
+      .paid-stamp {
+        width: 245px;
+        height: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="invoice-page">
+      {# ÚNICO DETALLE #} {% if details and details|length > 0 %} {% set d =
+      details[0] %} {% else %} {% set d = { "id_description": "", "id_qty": 1,
+      "id_rate": 0, "id_sale_tax": 0, "id_adress": "", "id_adress2": "" } %} {%
+      endif %} {% set line_total = (d.id_qty or 0) * (d.id_rate or 0) %} {% set
+      subtotal = line_total %} {% set total_tax = d.id_sale_tax or 0 %} {% set
+      total_display = invoice.i_total or line_total %}
 
-  {# ÚNICO DETALLE #}
-  {% if details and details|length > 0 %}
-    {% set d = details[0] %}
-  {% else %}
-    {% set d = {
-      "id_description": "",
-      "id_qty": 1,
-      "id_rate": 0,
-      "id_sale_tax": 0,
-      "id_adress": "",
-      "id_adress2": ""
-    } %}
-  {% endif %}
-  {% set line_total = (d.id_qty or 0) * (d.id_rate or 0) %}
-  {% set subtotal = line_total %}
-  {% set total_tax = d.id_sale_tax or 0 %}
-  {% set total_display = invoice.i_total or line_total %}
+      <!-- ENCABEZADO EN TABLA -->
+      <table style="width: 100%">
+        <tr>
+          <td style="width: 80%">
+            <div class="title-main">
+              {% if invoice.i_name %}{{ invoice.i_name }}{% else %}Raimundo
+              Marrero{% endif %}
+            </div>
+          </td>
+          <td style="width: 20%" align="right">
+            <div class="invoice-word">INVOICE</div>
+          </td>
+        </tr>
+      </table>
+      <table width="100%" border="0" cellspacing="0" cellpadding="1">
+        <tr>
+          <td width="37%" valign="top">
+            <div class="subtitle" style="margin-top: 10px">
+              {% if invoice.i_inscription %}{{ invoice.i_inscription }}{% else
+              %}EPA 780 -CGA 195{% endif %}
+            </div>
+          </td>
 
-  <!-- ENCABEZADO EN TABLA -->
-   <table style="width: 100%;">
-  <tr>
-    <td style="width: 80%;">
-      <div class="title-main">
-          {% if invoice.i_name %}{{ invoice.i_name }}{% else %}Raimundo Marrero{% endif %}
-        </div></td>
-    <td style="width: 20%;" align="right"><div class="invoice-word">INVOICE</div></td>
-  </tr>
-</table>
-  <table width="100%" border="0" cellspacing="0" cellpadding="1">
-    <tr>
-      <td width="37%" valign="top">
-        <div class="subtitle" style="margin-top: 10px;">
-          {% if invoice.i_inscription %}{{ invoice.i_inscription }}{% else %}EPA 780 -CGA 195{% endif %}
-        </div>
-      </td>
+          <td width="33%" valign="top">
+            <div class="subtitle">
+              Cond. El Centro I<br />
+              500 Muñoz Rivera Ste 301<br />
+              San Juan, PR 00918<br />
+              Voice: 787-622-7605<br />
+              email: raimundo.marrero2@gmail.com
+            </div>
+          </td>
 
-      <td width="33%" valign="top">
-        <div class="subtitle">
-          Cond. El Centro I<br />
-          500 Muñoz Rivera Ste 301<br />
-          San Juan, PR 00918<br />
-          Voice: 787-622-7605<br />
-          email: raimundo.marrero2@gmail.com
-        </div>
-      </td>
+          <td width="30%" valign="top" align="right">
+            <table
+              class="invoice-meta"
+              border="0"
+              cellspacing="0"
+              cellpadding="0"
+              align="right"
+            >
+              <tr>
+                <td class="label" align="left" width="70" nowrap="nowrap">
+                  DATE:
+                </td>
+                <td align="left" width="110">
+                  {% if invoice.i_date %}{{ invoice.i_date }}{% else %}Date{%
+                  endif %}
+                </td>
+              </tr>
+              <tr>
+                <td class="label" align="left" width="70" nowrap="nowrap">
+                  INVOICE #
+                </td>
+                <td align="left" width="110">
+                  {% if invoice.i_serie %}{{ invoice.i_serie }}{% else
+                  %}YYYY-MM-DD-00X{% endif %}
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
 
-      <td width="30%" valign="top" align="right">
-        <table class="invoice-meta" border="0" cellspacing="0" cellpadding="0" align="right">
+      <!-- BILL TO -->
+      <table
+        width="100%"
+        border="0"
+        cellspacing="0"
+        cellpadding="1"
+        style="margin-top: 10px"
+      >
+        <tr>
+          <td width="39%" class="label">BILL TO:</td>
+          <td width="70%">
+            <table border="0" cellspacing="0" cellpadding="0">
+              <tr>
+                <td class="billto-value" width="245">
+                  {% if invoice.i_billto %}{{ invoice.i_billto }}{% else
+                  %}Client{% endif %}
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+
+      <!-- TABLA DE DETALLE (UN SOLO DETALLE) -->
+      <table class="items-table">
+        <thead>
           <tr>
-            <td class="label" align="left" width="70" nowrap="nowrap">DATE:</td>
-            <td align="left" width="110">
-              {% if invoice.i_date %}{{ invoice.i_date }}{% else %}Date{% endif %}
-            </td>
+            <th style="width: 60%">DESCRIPTION</th>
+            <th style="width: 10%">QTY.</th>
+            <th style="width: 15%">RATE</th>
+            <th style="width: 15%">AMOUNT</th>
           </tr>
+        </thead>
+        <tbody>
           <tr>
-            <td class="label" align="left" width="70" nowrap="nowrap">INVOICE #</td>
-            <td align="left" width="110">
-              {% if invoice.i_serie %}{{ invoice.i_serie }}{% else %}YYYY-MM-DD-00X{% endif %}
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
-
-  <!-- BILL TO -->
-  <table width="100%" border="0" cellspacing="0" cellpadding="1" style="margin-top:10px;">
-    <tr>
-      <td width="39%" class="label">BILL TO:</td>
-      <td width="70%">
-        <table border="0" cellspacing="0" cellpadding="0">
-          <tr>
-            <td class="billto-value" width="245">
-        {% if invoice.i_billto %}{{ invoice.i_billto }}{% else %}Client{% endif %}
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
-
-  <!-- TABLA DE DETALLE (UN SOLO DETALLE) -->
-  <table class="items-table">
-    <thead>
-    <tr>
-      <th style="width:60%;">DESCRIPTION</th>
-      <th style="width:10%;">QTY.</th>
-      <th style="width:15%;">RATE</th>
-      <th style="width:15%;">AMOUNT</th>
-    </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td>
-          <div>
-            {% if d.id_description %}{{d.id_description }}{% endif %}
-          </div>          
-          <table class="detail-paid-table" border="0" cellspacing="0" cellpadding="0" style="margin-top:4px; padding-top: 30px;">
-            <tr>
-              <td width="42%" valign="top">
-                <div>
-                  <span class="label">Located at:</span>
-                </div>
-                <div class="">
-                  {% if d.id_adress %}{{ d.id_adress }}{% endif %}<br />
-                  {% if d.id_adress2 %}{{ d.id_adress2 }}{% endif %}
-                </div>
-              </td>
-              <td class="detail-paid-cell" width="58%">
-                {% if invoice.i_is_pay %}
+            <td>
+              <div class="label">
+                {% if d.id_description %}{{d.id_description }}{% endif %}
+              </div>
+              <table
+                class="detail-paid-table"
+                border="0"
+                cellspacing="0"
+                cellpadding="0"
+                style="margin-top: 4px; padding-top: 30px"
+              >
+                <tr>
+                  <td width="42%" valign="top">
+                    <div>
+                      <span class="label">Located at:</span>
+                    </div>
+                    <div>
+                      {% if d.id_adress %}{{ d.id_adress }}{% endif %}<br />
+                      {% if d.id_adress2 %}{{ d.id_adress2 }}{% endif %}
+                    </div>
+                  </td>
+                  <td class="detail-paid-cell" width="58%">
+                    {% if invoice.i_is_pay %}
+                    <img
+                      class="paid-stamp"
+                      src="app/assets/paid.png"
+                      alt="Paid"
+                    />
+                    {% endif %}
+                  </td>
+                </tr>
+              </table>
+              <!-- Firma debajo de Address 2 -->
+              <div>
                 <img
-                  class="paid-stamp"
-                  src="app/assets/paid.png"
-                  alt="Paid"
+                  class="signature-image"
+                  src="app/assets/signRaimundo.png"
+                  alt="Signature"
                 />
-                {% endif %}
-              </td>
-            </tr>
-          </table>
-          <!-- Firma debajo de Address 2 -->
-          <div>
-            <img
-              class="signature-image"
-              src="app/assets/signRaimundo.png"
-              alt="Signature"
-            />
-          </div>
-        </td>
-        <td class="text-right">
-          {% if d.id_qty is not none %}
-            {{ "%.2f"|format(d.id_qty) }}
-          {% else %}
-            1.00
-          {% endif %}
-        </td>
-        <td class="text-right">
-          {% if d.id_rate is not none %}
-            {{ "%.2f"|format(d.id_rate) }}
-          {% endif %}
-        </td>
-        <td class="text-right">
-          {{ "%.2f"|format(line_total) }}
-        </td>
-      </tr>
-    </tbody>
-  </table>
+              </div>
+            </td>
+            <td class="text-right">
+              {% if d.id_qty is not none %} {{ "%.2f"|format(d.id_qty) }} {%
+              else %} 1.00 {% endif %}
+            </td>
+            <td class="text-right">
+              {% if d.id_rate is not none %} {{ "%.2f"|format(d.id_rate) }} {%
+              endif %}
+            </td>
+            <td class="text-right">{{ "%.2f"|format(line_total) }}</td>
+          </tr>
+        </tbody>
+      </table>
 
-  <!-- NOTA + TOTALES + PAID -->
-  <table width="100%" border="0" cellspacing="0" cellpadding="2" style="margin-top:15px;">
-    <tr>
-      <td width="60%" valign="top">
-        <div class="footer-note">
-          Favor emitir pago a favor de <strong>Raimundo Marrero Otero</strong>
-        </div>
-        <div class="signature-area">
-          <!-- vacío, ya usamos la firma en el bloque de detalle -->
-        </div>
-      </td>
-      <td width="40%" valign="top" align="right">
-        <table class="totals-table" style="padding: 0%; margin: 0%;">
-          <tr>
-            <td class="totals-label">SUBTOTAL</td>
-            <td class="totals-value">
-              {{ "%.2f"|format(subtotal) }}
-            </td>
-          </tr>
-          <tr>
-            <td class="totals-label">TAX RATE</td>
-            <td class="totals-value">
-              {{ "%.2f"|format(total_tax) }}
-            </td>
-          </tr>
-          <tr>
-            <td class="totals-label">SALES TAX</td>
-            <td class="totals-value">
-              {{ "%.2f"|format(total_tax) }}
-            </td>
-          </tr>
-          <tr>
-            <td class="totals-label">Down payment</td>
-            <td class="totals-value">
-              <!-- opcional -->
-            </td>
-          </tr>
-          <tr>
-            <td class="totals-label"><strong>TOTAL</strong></td>
-            <td class="totals-value">
-               $ {{ "%.2f"|format(total_display) }}
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
-
-</div>
-</body>
+      <!-- NOTA + TOTALES + PAID -->
+      <table
+        width="100%"
+        border="0"
+        cellspacing="0"
+        cellpadding="2"
+        style="margin-top: 15px"
+      >
+        <tr>
+          <td width="60%" valign="top">
+            <div class="footer-note">
+              Favor emitir pago a favor de
+              <strong>Raimundo Marrero Otero</strong>
+            </div>
+            <div class="signature-area">
+              <!-- vacío, ya usamos la firma en el bloque de detalle -->
+            </div>
+          </td>
+          <td width="40%" valign="top" align="right">
+            <table class="totals-table" style="padding: 0%; margin: 0%">
+              <tr>
+                <td class="totals-label">SUBTOTAL</td>
+                <td class="totals-value">{{ "%.2f"|format(subtotal) }}</td>
+              </tr>
+              <tr>
+                <td class="totals-label">TAX RATE</td>
+                <td class="totals-value">{{ "%.2f"|format(total_tax) }}</td>
+              </tr>
+              <tr>
+                <td class="totals-label">SALES TAX</td>
+                <td class="totals-value">{{ "%.2f"|format(total_tax) }}</td>
+              </tr>
+              <tr>
+                <td class="totals-label">Down payment</td>
+                <td class="totals-value">
+                  <!-- opcional -->
+                </td>
+              </tr>
+              <tr>
+                <td class="totals-label"><strong>TOTAL</strong></td>
+                <td class="totals-value">
+                  $ {{ "%.2f"|format(total_display) }}
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    </div>
+  </body>
 </html>
