@@ -179,7 +179,7 @@
   <tr>
     <td style="width: 80%;">
       <div class="title-main">
-          {% if invoice.i_name %}{{ invoice.i_name }}{% else %}Raimundo Marrero{% endif %} - TASADOR
+          {% if invoice.i_name %}{{ invoice.i_name }}{% else %}Raimundo Marrero{% endif %}
         </div></td>
     <td style="width: 20%;" align="right"><div class="invoice-word">INVOICE</div></td>
   </tr>
@@ -224,7 +224,7 @@
   <!-- BILL TO -->
   <table width="100%" border="0" cellspacing="0" cellpadding="1" style="margin-top:10px;">
     <tr>
-      <td width="37%" class="label">BILL TO:</td>
+      <td width="40%" class="label">BILL TO:</td>
       <td width="70%">
         <table border="0" cellspacing="0" cellpadding="0">
           <tr>
@@ -259,7 +259,7 @@
                 <div>
                   <span class="label">Located at:</span>
                 </div>
-                <div class="address-highlight">
+                <div class="">
                   {% if d.id_adress %}{{ d.id_adress }}{% endif %}<br />
                   {% if d.id_adress2 %}{{ d.id_adress2 }}{% endif %}
                 </div>
