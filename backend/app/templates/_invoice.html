@@ -35,9 +35,7 @@
         font-weight: bold;
       }
 
-      .label2 {
-        margin-top: -2px;
-      }
+      
 
       .mt-5 {
         margin-top: 5px;
@@ -274,9 +272,9 @@
         <tbody>
           <tr>
             <td>
-              <a class="label2">
+              <div>
                 {% if d.id_description %}{{d.id_description }}{% endif %}
-              </a>
+              </div>
               <table
                 class="detail-paid-table"
                 border="0"
@@ -285,7 +283,7 @@
                 style="margin-top: 4px; padding-top: 30px"
               >
                 <tr>
-                  <td width="42%" valign="top" style="padding-left: 2px;>
+                  <td width="42%" valign="top" style="padding-left: 2px;">
                     <div>
                       <span class="label">Located at:</span>
                     </div>
