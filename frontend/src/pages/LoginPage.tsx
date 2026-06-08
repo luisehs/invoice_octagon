@@ -2,7 +2,6 @@
 import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import octagonLogo from "../assets/footer-logo-octagon2.png";
 
 const LoginPage: React.FC = () => {
   const { login } = useAuth();
@@ -33,15 +32,6 @@ const LoginPage: React.FC = () => {
   return (
     <div className="login-page h-screen flex items-center justify-center">
       <div className="login-card">
-        <div className="login-header">
-          <div className="login-logo-box">
-            <img src={octagonLogo} alt="Octagon" />
-          </div>
-          <div>
-            <div className="login-title">RMCP Invoices</div>
-          </div>
-        </div>
-
         <div className="login-copy">
           <h1>Welcome back</h1>
           <p>Sign in to continue managing invoices.</p>

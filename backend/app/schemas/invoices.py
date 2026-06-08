@@ -38,6 +38,7 @@ class InvoiceRead(BaseModel):
     i_billto: Optional[str]
     i_total: float
     i_is_pay: bool
+    i_is_deleted: bool
     i_u_id: str
     i_create_at: datetime
 

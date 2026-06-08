@@ -29,6 +29,7 @@ def build_invoice_read(data: dict) -> InvoiceRead:
         i_billto=data["i_billto"],
         i_total=float(data["i_total"]),
         i_is_pay=bool(data.get("i_is_pay", False)),
+        i_is_deleted=bool(data.get("i_is_deleted", False)),
         i_u_id=data["i_u_id"],
         i_create_at=data["i_create_at"],
     )
@@ -174,14 +175,20 @@ async def get_next_invoice_serie(
 ):
     try:
         resp = supabase.rpc(
-            "fn_invoices_list",
+            "fn_invoices_list_for_serie",
             {"p_u_id": current_user_id},
         ).execute()
     except Exception as exc:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error fetching next invoice serie: {exc}",
-        ) from exc
+        try:
+            resp = supabase.rpc(
+                "fn_invoices_list",
+                {"p_u_id": current_user_id},
+            ).execute()
+        except Exception as fallback_exc:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Error fetching next invoice serie: {fallback_exc}",
+            ) from exc
 
     latest_invoice = (resp.data or [None])[0]
     latest_serie = latest_invoice.get("i_serie") if latest_invoice else None
@@ -294,6 +301,29 @@ async def update_invoice(
             ) from exc
 
     return build_invoice_read(invoice_resp.data)
+
+
+@router.delete("/{invoice_id}")
+async def delete_invoice(
+    invoice_id: str,
+    current_user_id: str = Depends(get_current_user_id),
+):
+    invoice = await get_invoice(invoice_id, current_user_id)
+
+    if invoice.i_is_deleted:
+        return {"ok": True}
+
+    try:
+        supabase.table("invoices").update({"i_is_deleted": True}).eq(
+            "i_id", invoice_id
+        ).execute()
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error deleting invoice: {exc}",
+        ) from exc
+
+    return {"ok": True}
 
 @router.get("/{invoice_id}/pdf")
 async def get_invoice_pdf(

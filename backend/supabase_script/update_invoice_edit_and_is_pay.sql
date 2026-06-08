@@ -1,10 +1,13 @@
 -- Ejecutar este script en Supabase SQL Editor para habilitar:
--- 1. Columna i_is_pay en public.invoices.
+-- 1. Columnas i_is_pay / i_is_deleted en public.invoices.
 -- 2. Funciones de create/update con i_is_pay.
 -- 3. Edicion completa de invoice con reemplazo de detalles.
 
 alter table public.invoices
     add column if not exists i_is_pay boolean not null default false;
+
+alter table public.invoices
+    add column if not exists i_is_deleted boolean not null default false;
 
 drop function if exists public.fn_invoices_create(
     text, text, text, text, text, date, text, numeric, uuid
@@ -83,6 +86,52 @@ begin
 end;
 $$;
 
+create or replace function public.fn_invoices_list(
+    p_u_id uuid default null
+)
+returns setof public.invoices
+language plpgsql
+as $$
+begin
+    if p_u_id is null then
+        return query
+        select *
+        from public.invoices
+        where coalesce(i_is_deleted, false) = false
+        order by i_create_at desc;
+    else
+        return query
+        select *
+        from public.invoices
+        where i_u_id = p_u_id
+          and coalesce(i_is_deleted, false) = false
+        order by i_create_at desc;
+    end if;
+end;
+$$;
+
+create or replace function public.fn_invoices_list_for_serie(
+    p_u_id uuid default null
+)
+returns setof public.invoices
+language plpgsql
+as $$
+begin
+    if p_u_id is null then
+        return query
+        select *
+        from public.invoices
+        order by i_create_at desc;
+    else
+        return query
+        select *
+        from public.invoices
+        where i_u_id = p_u_id
+        order by i_create_at desc;
+    end if;
+end;
+$$;
+
 create or replace function public.fn_invoices_summary(
     p_u_id uuid
 )
@@ -109,7 +158,21 @@ as $$
               and i_date < date_trunc('month', current_date)::date
         ), 0)::numeric(12,2) as total_last_month
     from public.invoices
-    where i_u_id = p_u_id;
+    where i_u_id = p_u_id
+      and coalesce(i_is_deleted, false) = false;
+$$;
+
+create or replace function public.fn_invoices_delete(
+    p_i_id uuid
+)
+returns void
+language plpgsql
+as $$
+begin
+    update public.invoices
+    set i_is_deleted = true
+    where i_id = p_i_id;
+end;
 $$;
 
 drop function if exists public.fn_invoice_create_with_details(

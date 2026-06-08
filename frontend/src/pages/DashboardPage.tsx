@@ -38,6 +38,7 @@ export interface InvoiceRead {
   i_billto?: string | null;
   i_total: number;
   i_is_pay: boolean;
+  i_is_deleted?: boolean;
   i_u_id: string;
   i_create_at: string;
 }
@@ -108,12 +109,18 @@ const DashboardPage: React.FC = () => {
   const [editingInvoiceId, setEditingInvoiceId] = useState<string | null>(null);
   const [editingInvoice, setEditingInvoice] = useState<InvoiceCreate | null>(null);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const [pdfBlob, setPdfBlob] = useState<Blob | null>(null);
+  const [pdfFilename, setPdfFilename] = useState("invoice.pdf");
 
-  const totalPages = Math.max(1, Math.ceil(invoices.length / pageSize));
+  const activeInvoices = useMemo(
+    () => invoices.filter((invoice) => !invoice.i_is_deleted),
+    [invoices]
+  );
+  const totalPages = Math.max(1, Math.ceil(activeInvoices.length / pageSize));
   const pagedInvoices = useMemo(() => {
     const start = (currentPage - 1) * pageSize;
-    return invoices.slice(start, start + pageSize);
-  }, [currentPage, invoices, pageSize]);
+    return activeInvoices.slice(start, start + pageSize);
+  }, [activeInvoices, currentPage, pageSize]);
 
   const summaryBreakdown = useMemo<SummaryBreakdown>(() => {
     const now = new Date();
@@ -143,7 +150,7 @@ const DashboardPage: React.FC = () => {
       }
     };
 
-    invoices.forEach((invoice) => {
+    invoices.filter((invoice) => !invoice.i_is_deleted).forEach((invoice) => {
       const invoiceDate = new Date(`${invoice.i_date}T00:00:00`);
       const invoiceYear = invoiceDate.getFullYear();
       const invoiceMonth = invoiceDate.getMonth();
@@ -189,7 +196,7 @@ const DashboardPage: React.FC = () => {
     const lastMonthYear = lastMonthDate.getFullYear();
     const lastMonth = lastMonthDate.getMonth();
 
-    return items.reduce<InvoiceSummaryRead>((acc, invoice) => {
+    return items.filter((invoice) => !invoice.i_is_deleted).reduce<InvoiceSummaryRead>((acc, invoice) => {
       const total = Number(invoice.i_total) || 0;
       const invoiceDate = new Date(`${invoice.i_date}T00:00:00`);
       const invoiceYear = invoiceDate.getFullYear();
@@ -221,7 +228,7 @@ const DashboardPage: React.FC = () => {
     const lastMonthYear = lastMonthDate.getFullYear();
     const lastMonth = lastMonthDate.getMonth();
 
-    return items.reduce<InvoiceSummaryCounts>((acc, invoice) => {
+    return items.filter((invoice) => !invoice.i_is_deleted).reduce<InvoiceSummaryCounts>((acc, invoice) => {
       const invoiceDate = new Date(`${invoice.i_date}T00:00:00`);
       const invoiceYear = invoiceDate.getFullYear();
       const invoiceMonth = invoiceDate.getMonth();
@@ -249,12 +256,60 @@ const DashboardPage: React.FC = () => {
       const res = await api.get(`/invoices/${invoiceId}/pdf`, {
         responseType: "blob",
       });
-      const blobUrl = URL.createObjectURL(new Blob([res.data], { type: "application/pdf" }));
+      const blob = new Blob([res.data], { type: "application/pdf" });
+      const blobUrl = URL.createObjectURL(blob);
+      if (pdfUrl) {
+        URL.revokeObjectURL(pdfUrl);
+      }
+      setPdfBlob(blob);
+      setPdfFilename(`invoice_${invoiceId}.pdf`);
       setPdfUrl(blobUrl);
     } catch (err) {
       console.error(err);
       alert("Could not open PDF. Please try again.");
     }
+  };
+
+  const closePdfModal = () => {
+    if (pdfUrl) {
+      URL.revokeObjectURL(pdfUrl);
+    }
+    setPdfUrl(null);
+    setPdfBlob(null);
+  };
+
+  const downloadInvoicePdf = () => {
+    if (!pdfUrl) return;
+
+    const link = document.createElement("a");
+    link.href = pdfUrl;
+    link.download = pdfFilename;
+    link.click();
+  };
+
+  const shareInvoicePdf = async () => {
+    if (!pdfBlob) return;
+
+    const file = new File([pdfBlob], pdfFilename, { type: "application/pdf" });
+    const nav = navigator as Navigator & {
+      canShare?: (data: { files?: File[] }) => boolean;
+      share?: (data: { files?: File[]; title?: string; text?: string }) => Promise<void>;
+    };
+
+    if (nav.share && (!nav.canShare || nav.canShare({ files: [file] }))) {
+      try {
+        await nav.share({
+          files: [file],
+          title: "Invoice PDF",
+          text: "Invoice PDF",
+        });
+        return;
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    downloadInvoicePdf();
   };
 
   const refreshSummary = async (fallbackInvoices: InvoiceRead[]) => {
@@ -370,6 +425,27 @@ const DashboardPage: React.FC = () => {
     setEditingInvoice(null);
   };
 
+  const handleDeleteInvoice = async (invoice: InvoiceRead) => {
+    const confirmed = window.confirm(
+      `Are you sure you want to delete invoice ${invoice.i_serie ?? ""}?`
+    );
+
+    if (!confirmed) return;
+
+    try {
+      await api.delete(`/invoices/${invoice.i_id}`);
+      const nextInvoices = invoices.filter((item) => item.i_id !== invoice.i_id);
+      setInvoices(nextInvoices);
+      await refreshSummary(nextInvoices);
+      setCurrentPage((page) =>
+        Math.min(page, Math.max(1, Math.ceil(nextInvoices.length / pageSize)))
+      );
+    } catch (err) {
+      console.error(err);
+      alert("Could not delete invoice. Please try again.");
+    }
+  };
+
   const closeInvoiceModal = () => {
     setModalOpen(false);
     setEditingInvoiceId(null);
@@ -418,9 +494,9 @@ const DashboardPage: React.FC = () => {
     <div className="app-bg min-h-screen">
       <header className="app-header">
         <div className="header-left">
-          <div className="logo-box">
+          {/* <div className="logo-box">
             <span className="logo-text">O</span>
-          </div>
+          </div> */}
           <div>
             <div className="header-title">RMCP</div>
             <div className="header-subtitle">Raimundo Marrero - Tasador</div>
@@ -474,7 +550,7 @@ const DashboardPage: React.FC = () => {
             </div>
           </div>
           <div className="card-body">
-            {invoices.length === 0 ? (
+            {activeInvoices.length === 0 ? (
               <div className="table-empty-state">
                 <span className="material-icons" aria-hidden="true">
                   receipt_long
@@ -498,16 +574,18 @@ const DashboardPage: React.FC = () => {
                   <tbody>
                     {pagedInvoices.map((inv) => (
                       <tr key={inv.i_id}>
-                        <td>{inv.i_date}</td>
-                        <td className="serie-cell">{inv.i_serie}</td>
-                        <td>{inv.i_billto ?? "-"}</td>
-                        <td className="amount-cell">{formatCurrency(inv.i_total)}</td>
-                        <td className="text-center">
+                        <td data-label="Date">{inv.i_date}</td>
+                        <td data-label="Serie" className="serie-cell">{inv.i_serie}</td>
+                        <td data-label="Bill to">{inv.i_billto ?? "-"}</td>
+                        <td data-label="Total" className="amount-cell">
+                          {formatCurrency(inv.i_total)}
+                        </td>
+                        <td data-label="Paid" className="text-center">
                           <span className={`status-badge ${inv.i_is_pay ? "paid" : "unpaid"}`}>
                             {inv.i_is_pay ? "Paid" : "Pending"}
                           </span>
                         </td>
-                        <td className="actions-cell">
+                        <td data-label="Actions" className="actions-cell">
                           <div className="table-actions">
                             <button
                               className="icon-button"
@@ -519,6 +597,7 @@ const DashboardPage: React.FC = () => {
                               <span className="material-icons" aria-hidden="true">
                                 edit
                               </span>
+                              <span className="action-label">Edit</span>
                             </button>
                             <button
                               className="icon-button"
@@ -530,6 +609,19 @@ const DashboardPage: React.FC = () => {
                               <span className="material-icons" aria-hidden="true">
                                 picture_as_pdf
                               </span>
+                              <span className="action-label">PDF</span>
+                            </button>
+                            <button
+                              className="icon-button danger"
+                              type="button"
+                              title="Delete invoice"
+                              aria-label="Delete invoice"
+                              onClick={() => handleDeleteInvoice(inv)}
+                            >
+                              <span className="material-icons" aria-hidden="true">
+                                delete
+                              </span>
+                              <span className="action-label">Delete</span>
                             </button>
                           </div>
                         </td>
@@ -592,24 +684,36 @@ const DashboardPage: React.FC = () => {
 
       {pdfUrl && (
         <div className="modal-overlay">
-          <div className="modal-card modal-card-lg">
+          <div className="modal-card modal-card-lg pdf-modal-card">
             <div className="modal-header">
-              <h2>Invoice PDF</h2>
+              <div>
+                <h2>Invoice PDF</h2>
+              </div>
+              <div className="pdf-modal-actions">
+                <button className="btn-outline btn-icon-label" type="button" onClick={shareInvoicePdf}>
+                  <span className="material-icons" aria-hidden="true">ios_share</span>
+                  Share
+                </button>
+                <button className="btn-outline btn-icon-label" type="button" onClick={downloadInvoicePdf}>
+                  <span className="material-icons" aria-hidden="true">download</span>
+                  Download
+                </button>
+                <a className="btn-outline btn-icon-label" href={pdfUrl} target="_blank" rel="noreferrer">
+                  <span className="material-icons" aria-hidden="true">open_in_new</span>
+                  Open
+                </a>
+              </div>
               <button
-                className="modal-close"
-                onClick={() => {
-                  URL.revokeObjectURL(pdfUrl);
-                  setPdfUrl(null);
-                }}
+                className="modal-close btn-outline btn-icon-label"
+                onClick={closePdfModal}
               >
                 ×
               </button>
             </div>
-            <div className="modal-body" style={{ height: "75vh" }}>
+            <div className="modal-body pdf-modal-body">
               <iframe
                 src={pdfUrl}
                 title="Invoice PDF"
-                style={{ width: "100%", height: "100%", border: "none" }}
               />
             </div>
           </div>
