@@ -27,6 +27,8 @@
 
     .subtitle {
       font-size: 10px;
+      font-style: italic;
+      font-weight: bold;
     }
 
     .label {
@@ -39,10 +41,30 @@
     .mt-20 { margin-top: 20px; }
 
     .invoice-word {
-      font-size: 26px;
+      font-size: 30px;
       font-weight: bold;
       color: #dde2e6;
       letter-spacing: 2px;
+    }
+
+    .header-address {
+      font-size: 10px;
+      line-height: 1;
+      padding-top: 28px;
+    }
+
+    .invoice-meta {
+      margin-top: 24px;
+      font-size: 11px;
+    }
+
+    .invoice-meta td {
+      padding: 1px 4px;
+    }
+
+    .billto-value {
+      padding: 2px 4px;
+      font-weight: bold;
     }
 
     table {
@@ -99,14 +121,35 @@
       height: 40px;
     }
 
-    .paid-cell {
-      border: 3px solid #2da02f;
-      color: #2da02f;
-      font-size: 16px;
-      font-weight: bold;
-      text-align: center;
-      padding: 6px;
-      border-radius: 8px;
+    .signature-image {
+      width: 161px;
+      height: auto;
+      margin-left: 45px;
+    }
+
+    .detail-paid-table {
+      width: 100%;
+      margin-top: 0;
+    }
+
+    .address-highlight {
+      padding: 2px 4px;
+      line-height: 1.4;
+    }
+
+    .items-table .detail-paid-table td {
+      border: 0;
+      padding: 0;
+    }
+
+    .detail-paid-cell {
+      text-align: right;
+      vertical-align: top;
+    }
+
+    .paid-stamp {
+      width: 245px;
+      height: auto;
     }
   </style>
 </head>
@@ -132,50 +175,64 @@
   {% set total_display = invoice.i_total or line_total %}
 
   <!-- ENCABEZADO EN TABLA -->
-  <table width="100%" border="0" cellspacing="0" cellpadding="2">
+   <table style="width: 100%;">
+  <tr>
+    <td style="width: 80%;">
+      <div class="title-main">
+          {% if invoice.i_name %}{{ invoice.i_name }}{% else %}Raimundo Marrero{% endif %} - TASADOR
+        </div></td>
+    <td style="width: 20%;" align="right"><div class="invoice-word">INVOICE</div></td>
+  </tr>
+</table>
+  <table width="100%" border="0" cellspacing="0" cellpadding="1">
     <tr>
-      <td width="60%" valign="top">
-        <div class="title-main">
-          {% if invoice.i_name %}{{ invoice.i_name }}{% endif %}
-        </div>
-        <div class="subtitle" style="padding-bottom: 15px;">
-          {% if invoice.i_inscription %}{{ invoice.i_inscription }}{% endif %}
-        </div>
-
-        <div class="mt-5" >
-          <div>Cond. El Centro I</div>
-          <div>500 Muñoz Rivera Ste 301</div>
-          <div>San Juan, PR 00918</div>
-        </div>
-
-        <div class="mt-5">
-          <div>Voice: 787-622-7605</div>
-          <div>email: raimundo.marrero2@gmail.com</div>
+      <td width="37%" valign="top">
+        <div class="subtitle" style="margin-top: 10px;">
+          {% if invoice.i_inscription %}{{ invoice.i_inscription }}{% else %}EPA 780 -CGA 195{% endif %}
         </div>
       </td>
 
-      <td width="40%" valign="top" align="right">
-        <div class="invoice-word">INVOICE</div>
-        <div class="mt-20">
-          <div>
-            <span class="label">DATE:</span>
-            {% if invoice.i_date %} {{ invoice.i_date }}{% endif %}
-          </div>
-          <div class="mt-5">
-            <span class="label">INVOICE #</span>
-            {% if invoice.i_serie %} {{ invoice.i_serie }}{% endif %}
-          </div>
+      <td width="33%" valign="top">
+        <div class="subtitle">
+          Cond. El Centro I<br />
+          500 Muñoz Rivera Ste 301<br />
+          San Juan, PR 00918<br />
+          Voice: 787-622-7605<br />
+          email: raimundo.marrero2@gmail.com
         </div>
+      </td>
+
+      <td width="30%" valign="top" align="right">
+        <table class="invoice-meta" border="0" cellspacing="0" cellpadding="0" align="right">
+          <tr>
+            <td class="label" align="left" width="70" nowrap="nowrap">DATE:</td>
+            <td align="left" width="110">
+              {% if invoice.i_date %}{{ invoice.i_date }}{% else %}Date{% endif %}
+            </td>
+          </tr>
+          <tr>
+            <td class="label" align="left" width="70" nowrap="nowrap">INVOICE #</td>
+            <td align="left" width="110">
+              {% if invoice.i_serie %}{{ invoice.i_serie }}{% else %}YYYY-MM-DD-00X{% endif %}
+            </td>
+          </tr>
+        </table>
       </td>
     </tr>
   </table>
 
   <!-- BILL TO -->
-  <table width="100%" border="0" cellspacing="0" cellpadding="4" style="margin-top:15px;">
-    <tr style="padding-bottom: 20px;">
-      <td width="15%" class="label">BILL TO:</td>
-      <td width="85%" >
+  <table width="100%" border="0" cellspacing="0" cellpadding="1" style="margin-top:10px;">
+    <tr>
+      <td width="30%" class="label">BILL TO:</td>
+      <td width="70%">
+        <table border="0" cellspacing="0" cellpadding="0">
+          <tr>
+            <td class="billto-value" width="245">
         {% if invoice.i_billto %}{{ invoice.i_billto }}{% else %}Client{% endif %}
+            </td>
+          </tr>
+        </table>
       </td>
     </tr>
   </table>
@@ -196,25 +253,34 @@
           <div>
             {% if d.id_description %}{{ d.id_description }}{% endif %}
           </div>          
-          <div style="margin-top:4px; padding-top: 30px;">
-            <span class="label">Located at:</span>
-          </div>
-          <div style="margin-top:0px;">
-            {% if d.id_adress %}{{ d.id_adress }}{% endif %}
-          </div>
-          <div style="margin-top:0px;">
-            {% if d.id_adress2 %}{{ d.id_adress2 }}{% endif %}
-          </div>
-          <div style="margin-left: 80px; margin-right: 20px; margin-top: 15px;
-">
-            <div class="paid-cell">PAID</div>
-          </div>
+          <table class="detail-paid-table" border="0" cellspacing="0" cellpadding="0" style="margin-top:4px; padding-top: 30px;">
+            <tr>
+              <td width="42%" valign="top">
+                <div>
+                  <span class="label">Located at:</span>
+                </div>
+                <div class="address-highlight">
+                  {% if d.id_adress %}{{ d.id_adress }}{% endif %}<br />
+                  {% if d.id_adress2 %}{{ d.id_adress2 }}{% endif %}
+                </div>
+              </td>
+              <td class="detail-paid-cell" width="58%">
+                {% if invoice.i_is_pay %}
+                <img
+                  class="paid-stamp"
+                  src="app/assets/paid.png"
+                  alt="Paid"
+                />
+                {% endif %}
+              </td>
+            </tr>
+          </table>
           <!-- Firma debajo de Address 2 -->
-          <div style="margin-top:6px; padding-top: 50px;">
+          <div>
             <img
-              src="F:\projects\invoice_octagon\backend\app\assets\signRaimundo.png"
+              class="signature-image"
+              src="app/assets/signRaimundo.png"
               alt="Signature"
-              style="height:55px;"
             />
           </div>
         </td>
@@ -277,14 +343,9 @@
           <tr>
             <td class="totals-label"><strong>TOTAL</strong></td>
             <td class="totals-value">
-              {{ "%.2f"|format(total_display) }}
+               $ {{ "%.2f"|format(total_display) }}
             </td>
           </tr>
-          <!-- <tr>
-            <td colspan="2" align="center">
-              <div class="paid-cell">PAID</div>
-            </td>
-          </tr> -->
         </table>
       </td>
     </tr>

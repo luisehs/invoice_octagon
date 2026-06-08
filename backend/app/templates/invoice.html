@@ -262,11 +262,13 @@
               {{ "%.2f"|format(invoice.i_total or 0) }}
             </td>
           </tr>
+          {% if invoice.i_is_pay %}
           <tr>
             <td colspan="2" align="center">
               <div class="paid-cell">PAID</div>
             </td>
           </tr>
+          {% endif %}
         </table>
       </td>
     </tr>

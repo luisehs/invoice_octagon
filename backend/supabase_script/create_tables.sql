@@ -25,6 +25,7 @@ create table if not exists public.invoices (
     i_date date not null,
     i_billto text,
     i_total numeric(12, 2) not null,
+    i_is_pay boolean not null default false,
     i_u_id uuid not null,
     i_create_at timestamptz not null default now(),
     constraint invoices_user_fk
@@ -32,6 +33,9 @@ create table if not exists public.invoices (
         references public.users (u_id)
         on delete restrict
 );
+
+alter table public.invoices
+    add column if not exists i_is_pay boolean not null default false;
 
 -- Table invoice_details
 create table if not exists public.invoice_details (

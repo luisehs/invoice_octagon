@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import octagonLogo from "../assets/footer-logo-octagon2.png";
 
 const LoginPage: React.FC = () => {
   const { login } = useAuth();
@@ -30,14 +31,20 @@ const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="app-bg h-screen flex items-center justify-center">
+    <div className="login-page h-screen flex items-center justify-center">
       <div className="login-card">
         <div className="login-header">
-          <div className="logo-circle">L</div>
-          <div>
-            <div className="login-title">OCTAGONPR INVOICES</div>
-            <div className="login-subtitle">Internal dashboard</div>
+          <div className="login-logo-box">
+            <img src={octagonLogo} alt="Octagon" />
           </div>
+          <div>
+            <div className="login-title">RMCP Invoices</div>
+          </div>
+        </div>
+
+        <div className="login-copy">
+          <h1>Welcome back</h1>
+          <p>Sign in to continue managing invoices.</p>
         </div>
 
         <form onSubmit={handleSubmit} className="mt-4">
@@ -65,8 +72,13 @@ const LoginPage: React.FC = () => {
 
           {error && <div className="form-error mt-2">{error}</div>}
 
-          <button type="submit" className="btn-primary mt-4" disabled={loading}>
+          <button type="submit" className="btn-primary login-submit mt-4" disabled={loading}>
             {loading ? "Signing in..." : "Sign in"}
+          </button>
+
+          <button type="button" className="register-disabled mt-3" disabled>
+            Register account
+            <span>Coming soon</span>
           </button>
         </form>
       </div>

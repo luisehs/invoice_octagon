@@ -23,6 +23,7 @@ class InvoiceCreate(BaseModel):
     i_date: date
     i_billto: Optional[str] = None
     i_total: float
+    i_is_pay: bool = False
     details: List[InvoiceDetailCreate]
 
 
@@ -36,5 +37,22 @@ class InvoiceRead(BaseModel):
     i_date: date
     i_billto: Optional[str]
     i_total: float
+    i_is_pay: bool
     i_u_id: str
     i_create_at: datetime
+
+
+class InvoiceSummaryRead(BaseModel):
+    total: float
+    total_year: float
+    total_month: float
+    total_last_month: float
+
+
+class InvoiceDetailRead(InvoiceDetailCreate):
+    id_id: str
+    id_create_at: datetime
+
+
+class InvoiceWithDetailsRead(InvoiceRead):
+    details: List[InvoiceDetailRead]
