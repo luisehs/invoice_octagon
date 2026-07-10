@@ -107,7 +107,7 @@ end;
 $$;
 
 create or replace function public.fn_invoices_summary(
-    p_u_id uuid
+    p_u_id uuid default null
 )
 returns table (
     total numeric(12,2),
@@ -132,7 +132,7 @@ as $$
               and i_date < date_trunc('month', current_date)::date
         ), 0)::numeric(12,2) as total_last_month
     from public.invoices
-    where i_u_id = p_u_id
+    where (p_u_id is null or i_u_id = p_u_id)
       and coalesce(i_is_deleted, false) = false;
 $$;
 

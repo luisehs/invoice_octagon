@@ -84,15 +84,19 @@ def get_next_serie_for_user(u_id: str, serie_date: date) -> str:
     ``fn_invoices_list_for_serie`` -> ``fn_invoices_list`` fallback. If both
     RPCs fail the (second) exception propagates for the caller to map to a 500.
     """
+    # Numeración GLOBAL: la serie se basa en el último invoice de TODO el negocio
+    # (p_u_id=None), sin importar quién lo creó, para que web y bot compartan la
+    # misma secuencia y no generen series duplicadas. `u_id` se mantiene por
+    # compatibilidad de firma pero no filtra la búsqueda de la serie.
     try:
         resp = supabase.rpc(
             "fn_invoices_list_for_serie",
-            {"p_u_id": u_id},
+            {"p_u_id": None},
         ).execute()
     except Exception:
         resp = supabase.rpc(
             "fn_invoices_list",
-            {"p_u_id": u_id},
+            {"p_u_id": None},
         ).execute()
 
     latest_invoice = (resp.data or [None])[0]

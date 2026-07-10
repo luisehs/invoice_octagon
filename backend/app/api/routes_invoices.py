@@ -82,10 +82,12 @@ async def create_invoice(
 async def list_invoices(
     current_user_id: str = Depends(get_current_user_id),
 ):
+    # App de un solo negocio: se listan TODOS los invoices (sin filtrar por
+    # usuario), sin importar si los creó la web o el bot. p_u_id=None => todos.
     try:
         resp = supabase.rpc(
             "fn_invoices_list",
-            {"p_u_id": current_user_id},
+            {"p_u_id": None},
         ).execute()
     except Exception as exc:
         raise HTTPException(
@@ -104,10 +106,11 @@ async def list_invoices(
 async def get_invoices_summary(
     current_user_id: str = Depends(get_current_user_id),
 ):
+    # Totales sobre TODOS los invoices (p_u_id=None), igual que el listado.
     try:
         resp = supabase.rpc(
             "fn_invoices_summary",
-            {"p_u_id": current_user_id},
+            {"p_u_id": None},
         ).execute()
     except Exception as exc:
         raise HTTPException(
@@ -161,11 +164,7 @@ async def get_invoice(
             detail="Invoice not found",
         )
 
-    if invoice["i_u_id"] != current_user_id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to view this invoice",
-        )
+    # Sin chequeo de dueño: un solo negocio, todos ven/usan todos los invoices.
 
     try:
         details_resp = supabase.rpc(
@@ -291,12 +290,7 @@ async def get_invoice_pdf(
             detail="Invoice not found",
         )
 
-    # Verificar que la invoice pertenezca al usuario actual
-    if invoice["i_u_id"] != current_user_id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to view this invoice",
-        )
+    # Sin chequeo de dueño: un solo negocio, todos pueden ver el PDF de cualquiera.
 
     # 2-5. Fetch details, render y convertir a PDF (lógica compartida con el bot)
     pdf_bytes, _invoice = generate_invoice_pdf(invoice_id)
