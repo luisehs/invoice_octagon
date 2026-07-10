@@ -6,3 +6,11 @@ backend/supabase_script/invoice.sql
 /backend/app/core/__pycache__
 /backend/app/db/__pycache__
 /backend/app/schemas/__pycache__
+/backend/app/services/__pycache__
+/backend/scripts/__pycache__
+backend/.DS_Store
+backend/.env
+backend/supabase_script/.DS_Store
+CLAUDE.md
+PROMPTS_FASE2.md
+backend/.env

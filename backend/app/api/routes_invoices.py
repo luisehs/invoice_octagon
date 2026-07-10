@@ -10,8 +10,11 @@ from app.schemas.invoices import (
     InvoiceWithDetailsRead,
 )
 from fastapi.responses import Response
-from app.core.templates import render_template
-from app.core.pdf import html_to_pdf_bytes
+from app.services.invoice_service import (
+    create_invoice_for_user,
+    get_next_serie_for_user,
+    generate_invoice_pdf,
+)
 from datetime import date
 
 router = APIRouter(prefix="/invoices", tags=["invoices"])
@@ -59,68 +62,19 @@ def build_invoice_summary(data: dict | None) -> InvoiceSummaryRead:
     )
 
 
-def build_next_serie(last_serie: str | None, serie_date: date) -> str:
-    date_prefix = serie_date.isoformat()
-    fallback = f"{date_prefix}-001"
-
-    if not last_serie:
-        return fallback
-
-    parts = last_serie.rsplit("-", 1)
-    if len(parts) != 2:
-        return fallback
-
-    prefix, number = parts
-    if prefix != date_prefix or not number.isdigit():
-        return fallback
-
-    next_number = int(number) + 1
-    width = max(3, len(number))
-    return f"{prefix}-{str(next_number).zfill(width)}"
-
-
 @router.post("/", response_model=InvoiceRead)
 async def create_invoice(
     invoice: InvoiceCreate,
     current_user_id: str = Depends(get_current_user_id),
 ):
-    details_json = [
-        {
-            "id_number": d.id_number,
-            "id_description": d.id_description,
-            "id_qty": d.id_qty,
-            "id_rate": d.id_rate,
-            "id_sale_tax": d.id_sale_tax,
-            "id_adress": d.id_adress,
-            "id_adress2": d.id_adress2,
-        }
-        for d in invoice.details
-    ]
-
     try:
-        resp = supabase.rpc(
-            "fn_invoice_create_with_details",
-            {
-                "p_name": invoice.i_name,
-                "p_inscription": invoice.i_inscription,
-                "p_email": invoice.i_email,
-                "p_address": invoice.i_address,
-                "p_serie": invoice.i_serie,
-                "p_date": str(invoice.i_date),
-                "p_billto": invoice.i_billto,
-                "p_total": invoice.i_total,
-                "p_is_pay": invoice.i_is_pay,
-                "p_u_id": current_user_id,
-                "p_details": details_json,
-            },
-        ).execute()
+        data = create_invoice_for_user(current_user_id, invoice)
     except Exception as exc:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error creating invoice: {exc}",
         ) from exc
 
-    data = resp.data
     return build_invoice_read(data)
 
 
@@ -174,26 +128,14 @@ async def get_next_invoice_serie(
     current_user_id: str = Depends(get_current_user_id),
 ):
     try:
-        resp = supabase.rpc(
-            "fn_invoices_list_for_serie",
-            {"p_u_id": current_user_id},
-        ).execute()
+        serie = get_next_serie_for_user(current_user_id, serie_date or date.today())
     except Exception as exc:
-        try:
-            resp = supabase.rpc(
-                "fn_invoices_list",
-                {"p_u_id": current_user_id},
-            ).execute()
-        except Exception as fallback_exc:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Error fetching next invoice serie: {fallback_exc}",
-            ) from exc
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error fetching next invoice serie: {exc}",
+        ) from exc
 
-    latest_invoice = (resp.data or [None])[0]
-    latest_serie = latest_invoice.get("i_serie") if latest_invoice else None
-
-    return {"i_serie": build_next_serie(latest_serie, serie_date or date.today())}
+    return {"i_serie": serie}
 
 
 @router.get("/{invoice_id}", response_model=InvoiceWithDetailsRead)
@@ -356,45 +298,8 @@ async def get_invoice_pdf(
             detail="Not authorized to view this invoice",
         )
 
-    # 2. Obtener los detalles de la invoice
-    try:
-        details_resp = supabase.rpc(
-            "fn_invoice_details_list_by_invoice",
-            {"p_id_id": invoice_id},
-        ).execute()
-    except Exception as exc:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error fetching invoice details: {exc}",
-        ) from exc
-
-    details = details_resp.data or []
-
-    # 3. Preparar contexto para el template (usa invoice.html)
-    context = {
-        "invoice": invoice,
-        "details": details,
-        "i_total": invoice.get("i_total", 0),
-        "i_serie": invoice.get("i_serie", ""),
-        "i_date": invoice.get("i_date", ""),
-        "i_billto": invoice.get("i_billto", ""),
-        "i_name": invoice.get("i_name", ""),
-        "i_inscription": invoice.get("i_inscription", ""),
-        "i_email": invoice.get("i_email", ""),
-        "i_address": invoice.get("i_address", ""),
-    }
-
-    # 4. Renderizar HTML desde el template
-    html = render_template("_invoice.html", context)
-
-    # 5. Convertir HTML a PDF
-    try:
-        pdf_bytes = html_to_pdf_bytes(html)
-    except RuntimeError as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e),
-        )
+    # 2-5. Fetch details, render y convertir a PDF (lógica compartida con el bot)
+    pdf_bytes, _invoice = generate_invoice_pdf(invoice_id)
 
     # 6. Devolver el PDF como respuesta HTTP
     return Response(
