@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.routes_auth import router as auth_router
 from app.api.routes_invoices import router as invoices_router
+from app.api.routes_telegram import router as telegram_router
 
 app = FastAPI(title="Invoice Backend")
 
@@ -34,3 +35,4 @@ def health_check():
 
 app.include_router(auth_router)
 app.include_router(invoices_router)
+app.include_router(telegram_router)
