@@ -1,5 +1,5 @@
 # app/bot_polling.py
-"""Runner de desarrollo (Fase B): long polling contra Telegram.
+"""Runner de desarrollo: long polling contra Telegram.
 
 Uso (desde backend/):   python -m app.bot_polling
 
@@ -10,10 +10,10 @@ Uso (desde backend/):   python -m app.bot_polling
   chat al u_id autenticado (se auto-registra en la whitelist).
 - Cualquier otro texto exige estar en telegram_users (whitelist). Si no estás,
   responde "no autorizado" e invita a usar /register.
-- Para usuarios whitelisted: /start (bienvenida), /cancelar (resetea) y eco del
-  texto (placeholder del agente que llega en la Fase C).
+- Para usuarios whitelisted todo lo demás (comandos del flujo, /onAI, /offAI,
+  formato numerado) lo maneja `services/bot_flow.py` (flujo ESTÁTICO).
 
-El mismo `handle_incoming_message` lo reutilizará el webhook en la Fase E.
+El mismo `handle_incoming_message` lo reutiliza el webhook (routes_telegram).
 NOTA: el estado del flujo /register vive en memoria (dict de abajo). Sirve para
 el polling de dev; para el webhook (Fase E, multi-proceso) habrá que persistirlo.
 """
@@ -24,19 +24,7 @@ import httpx
 from app.core.config import settings
 from app.core.security import verify_password
 from app.db.supabase_client import supabase
-from app.services import telegram_client
-from app.services import invoice_agent
-
-WELCOME = (
-    "👋 Bot de facturación de Octagon.\n\n"
-    "Envíame los datos del cliente (nombre, catastro, dirección, email, "
-    "descripción del servicio y rate) y crearé el invoice.\n\n"
-    "Comandos:\n"
-    "  /id — muestra tu chat_id\n"
-    "  /register — vincula tu cuenta (email + contraseña)\n"
-    "  /cancelar — reinicia la conversación\n\n"
-    "(Fase B: por ahora solo hago eco de tu mensaje.)"
-)
+from app.services import bot_flow, bot_session, telegram_client
 
 # Estado en memoria del flujo /register (chat_id -> {"step": "email"|"password", ...}).
 # Solo para el runner de polling; se pierde al reiniciar (basta con re-hacer /register).
@@ -62,14 +50,8 @@ def get_telegram_user(chat_id: int) -> dict | None:
 
 
 def reset_session(chat_id: int) -> None:
-    """Resetea la sesión del chat a []/idle (usado por /cancelar)."""
-    try:
-        supabase.rpc(
-            "fn_chat_session_upsert",
-            {"p_chat_id": chat_id, "p_messages": [], "p_status": "idle"},
-        ).execute()
-    except Exception as exc:
-        print(f"[session] error en fn_chat_session_upsert: {exc}")
+    """Sesión limpia (idle, sin datos, AI OFF)."""
+    bot_session.reset_session(chat_id)
 
 
 def authenticate_user(email: str, password: str) -> dict | None:
@@ -123,13 +105,11 @@ async def handle_incoming_message(chat_id: int, text: str) -> None:
         await telegram_client.send_message(chat_id, f"🆔 Tu chat_id es: {chat_id}")
         return
 
-    # /cancelar: aborta un registro en curso y/o resetea la sesión. Disponible
-    # siempre (también a mitad de /register, antes de estar whitelisted).
-    if text == "/cancelar":
+    # /cancelar a mitad de /register: aborta el registro (antes de whitelist).
+    # Si ya está whitelisted, lo maneja bot_flow (resetea solo el flujo).
+    if text == "/cancelar" and chat_id in _pending_register:
         _pending_register.pop(chat_id, None)
-        if get_telegram_user(chat_id):
-            reset_session(chat_id)
-        await telegram_client.send_message(chat_id, "🔄 Cancelado.")
+        await telegram_client.send_message(chat_id, "🔄 Registro cancelado.")
         return
 
     # /register: inicia el flujo email -> contraseña (no requiere whitelist)
@@ -181,12 +161,8 @@ async def handle_incoming_message(chat_id: int, text: str) -> None:
         )
         return
 
-    if text == "/start":
-        await telegram_client.send_message(chat_id, WELCOME)
-        return
-
-    # Agente conversacional (Fases C/D): reemplaza el eco.
-    await invoice_agent.handle_incoming_message(chat_id, text, user["tu_u_id"])
+    # Flujo estático (+ /onAI opcional): comandos, formato numerado, creación.
+    await bot_flow.handle_incoming_message(chat_id, text, user["tu_u_id"])
 
 
 async def poll() -> None:

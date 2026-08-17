@@ -13,6 +13,10 @@ class Settings(BaseSettings):
     TELEGRAM_WEBHOOK_SECRET: str = ""
     ANTHROPIC_API_KEY: str = ""
     ANTHROPIC_MODEL: str = "claude-sonnet-4-5"
+    # Modo AI (/onAI): minutos que dura encendido antes de volver a OFF solo.
+    AI_MODE_TTL_MINUTES: int = 30
+    # Sesión del bot abandonada por más de N minutos → arranca limpia.
+    SESSION_TTL_MINUTES: int = 120
 
     class Config:
         env_file = ".env"
