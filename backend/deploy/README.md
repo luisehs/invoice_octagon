@@ -144,3 +144,33 @@ Para volver a long polling (dev): `python scripts/set_webhook.py delete`.
 > guarda estado en memoria por proceso, así que puede fallar entre workers. Para
 > registrar usuarios de forma fiable, hazlo con `--workers 1` temporalmente o vía
 > long polling local.
+
+## Keep-alive de Supabase (evita que el proyecto se pause por inactividad)
+
+Supabase (plan gratuito) pausa el proyecto tras varios días sin actividad. El
+backend expone `GET /health/db`, que hace un `SELECT` mínimo (solo lectura, sin
+auth, sin datos). Basta con llamarlo una vez al día desde la EC2.
+
+Instalar el cron (una sola vez, en la EC2):
+
+```bash
+crontab -e
+```
+
+y agregar esta línea (todos los días a las 09:00 UTC, con log):
+
+```
+0 9 * * * curl -fsS --max-time 30 http://127.0.0.1:8000/health/db >> /var/log/supabase-keepalive.log 2>&1
+```
+
+Verificar a mano:
+
+```bash
+curl -s http://127.0.0.1:8000/health/db
+# {"status":"ok","db":"reachable"}
+tail -3 /var/log/supabase-keepalive.log
+```
+
+Si el log muestra `"status":"error"`, la base no respondió (revisar Supabase).
+Nota: si el proyecto YA está pausado hay que reanudarlo a mano una vez desde el
+dashboard de Supabase; el cron evita que vuelva a pasar.
